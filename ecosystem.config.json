@@ -1,0 +1,32 @@
+{
+  "apps": [
+    {
+      "name": "laravel-boilerplate-queue",
+      "script": "php",
+      "args": ["artisan", "queue:work"],
+      "instances": 1,
+      "autorestart": true,
+      "max_restarts": 10,
+      "interpreter": "none",
+      "watch": false,
+      "time": true,
+      "user": "www-data"
+    },
+      {
+          "name": "boilerplate-schedule-worker",
+          "script": "artisan",
+          "args": ["schedule:work"],
+          "instances": 1,
+          "wait_ready": false,
+          "autorestart": true,
+          "max_restarts": 2,
+          "interpreter" : "php",
+          "watch": true,
+          "error_file": "log/err.log",
+          "out_file": "log/out.log",
+          "log_file": "log/combined.log",
+          "time": true,
+          "user": "www-data"
+      }
+  ]
+}
