@@ -4,6 +4,7 @@ use App\Http\Controllers\AboutController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\FileUploadController;
 use App\Http\Controllers\RegularBannerController;
+use App\Http\Controllers\SeoMetaController;
 use Illuminate\Support\Facades\Route;
 
 
@@ -28,6 +29,12 @@ Route::middleware(['auth:api', 'check.token'])->group(function () {
     Route::get('/regular-banner/{page}', [RegularBannerController::class, 'show']);
     Route::put('/regular-banner/{page}', [RegularBannerController::class, 'update']);
     Route::delete('/regular-banner/{page}', [RegularBannerController::class, 'destroy']);
+
+    Route::get('/seo-meta', [SeoMetaController::class, 'index']);
+    Route::post('/seo-meta', [SeoMetaController::class, 'store']);
+    Route::get('/seo-meta/{page}', [SeoMetaController::class, 'show']);
+    Route::put('/seo-meta/{page}', [SeoMetaController::class, 'update']);
+    Route::delete('/seo-meta/{page}', [SeoMetaController::class, 'destroy']);
 
     Route::post('/upload-images', [FileUploadController::class, 'uploadImages'])->name('admin.upload-images');
     Route::post('/upload-file', [FileUploadController::class, 'uploadFile'])->name('admin.upload-file');
