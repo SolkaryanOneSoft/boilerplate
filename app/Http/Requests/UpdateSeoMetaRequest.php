@@ -20,13 +20,13 @@ class UpdateSeoMetaRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'page' => ['sometime', 'string', 'max:255', 'unique:seo_metas,page'],
+            'page' => ['sometimes', 'string', 'max:255', 'unique:seo_metas,page'],
 
-            'title_am' => ['sometime', 'string', 'max:255'],
+            'title_am' => ['sometimes', 'string', 'max:255'],
             'title_en' => ['nullable', 'string', 'max:255'],
             'title_ru' => ['nullable', 'string', 'max:255'],
 
-            'description_am' => ['sometime', 'string', 'max:10000'],
+            'description_am' => ['sometimes', 'string', 'max:10000'],
             'description_en' => ['nullable', 'string', 'max:10000'],
             'description_ru' => ['nullable', 'string', 'max:10000'],
 

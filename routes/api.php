@@ -3,6 +3,7 @@
 use App\Http\Controllers\AboutController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\ContactUsController;
+use App\Http\Controllers\FaqController;
 use App\Http\Controllers\RegularBannerController;
 use App\Http\Controllers\SeoMetaController;
 use App\Http\Controllers\SocialAuthController;
@@ -27,6 +28,7 @@ Route::middleware(['auth:api', 'check.token'])->group(function () {
     Route::delete('/delete-account', [AuthController::class, 'deleteAccount']);
 });
 
+Route::apiResource('/faq', FaqController::class)->only('index', 'show');
 Route::get('/regular-banner/{page}', [RegularBannerController::class, 'show']);
 Route::get('/about', [AboutController::class, 'index']);
 Route::get('/seo-meta/{page}', [SeoMetaController::class, 'show']);
