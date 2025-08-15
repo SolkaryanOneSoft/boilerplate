@@ -62,5 +62,13 @@ class UsersSeeder extends Seeder
             'email_verified_at' => now(),
         ]);
         $superSusanna->assignRole('super_admin');
+
+        $user = User::create([
+            'name' => 'User Useryan',
+            'email' => 'user@gmail.com',
+            'password' => bcrypt('user@gmail.com'),
+            'email_verified_at' => now(),
+        ]);
+        $superSusanna->assignRole('user');
     }
 }

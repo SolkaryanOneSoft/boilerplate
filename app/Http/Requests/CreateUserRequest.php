@@ -5,7 +5,7 @@ namespace App\Http\Requests;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rules\Password;
 
-class CreateAdminRequest extends FormRequest
+class CreateUserRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -21,7 +21,7 @@ class CreateAdminRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'role' => ['required', 'integer', 'in:1,2'],
+            'role' => ['required', 'integer', 'in:1,2,3'],
             'email' => [
                 'required',
                 'string',

@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Exceptions\CustomErrorException;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ChangePasswordRequest;
-use App\Http\Requests\CreateAdminRequest;
+use App\Http\Requests\CreateUserRequest;
 use App\Http\Requests\IndexRequest;
 use App\Http\Requests\RefreshTokenRequest;
 use App\Http\Requests\UpdateUserRequest;
@@ -73,7 +73,8 @@ class AuthController extends Controller
         ]);
 
         $response = App::make(AccessTokenController::class)
-            ->issueToken(app()->make(ServerRequestInterface::class)->withParsedBody($tokenRequest->request->all()));
+            ->issueToken(app()->make(ServerRequestInterface::class)
+                ->withParsedBody($tokenRequest->request->all()));
 
         $tokenData = json_decode($response->getContent(), true);
 
@@ -143,6 +144,10 @@ class AuthController extends Controller
     {
         $user = Auth::user();
 
+        if ($user->provider) {
+            throw new CustomErrorException('not_allowed_to_change_password_for_social_users', 'errorMessage', Response::HTTP_BAD_REQUEST);
+        }
+
         if (!Hash::check($request->input('current_password'), $user->password)) {
             throw new CustomErrorException('incorrect_password', 'errorMessage', Response::HTTP_BAD_REQUEST);
         }
@@ -199,7 +204,7 @@ class AuthController extends Controller
         return $this->response204();
     }
 
-    public function createAdmin(CreateAdminRequest $request): JsonResponse
+    public function createUser(CreateUserRequest $request): JsonResponse
     {
         $userData = $request->validated();
         $role = $userData['role'];
@@ -212,9 +217,12 @@ class AuthController extends Controller
 
         switch ($role) {
             case 1;
-                $user->assignRole('admin');
+                $user->assignRole('user');
                 break;
             case 2;
+                $user->assignRole('admin');
+                break;
+            case 3;
                 $user->assignRole('super_admin');
                 break;
         }
@@ -232,6 +240,18 @@ class AuthController extends Controller
         $user = Auth::user();
         $user->update($request->validated());
         return $this->response201(['message' => __('successMessage.update')]);
+    }
+
+    public function deleteAccount(): JsonResponse
+    {
+        $user = Auth::user();
+
+        if ($user->hasRole('super_admin')) {
+            throw new CustomErrorException('cannot_delete_super_admin', 'auth', Response::HTTP_FORBIDDEN);
+        }
+
+        $user->delete();
+        return $this->response204();
     }
 
 }

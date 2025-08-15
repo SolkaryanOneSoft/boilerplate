@@ -13,7 +13,7 @@ Route::post('/refresh', [AuthController::class, 'refreshToken']);
 
 Route::middleware(['auth:api', 'check.token'])->group(function () {
     Route::middleware('role:super_admin')->group(function () {
-        Route::post('/create-admin', [AuthController::class, 'createAdmin']);
+        Route::post('/create-user', [AuthController::class, 'createUser']);
         Route::get('/users', [AuthController::class, 'index']);
         Route::delete('/delete-user/{user}', [AuthController::class, 'destroy']);
     });

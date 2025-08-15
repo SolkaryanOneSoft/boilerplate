@@ -20,6 +20,12 @@ class RolesSeeder extends Seeder
             'guard_name' => 'api',
         ]);
 
+        //User
+        $userRole = Role::firstOrCreate([
+            'name' => 'user',
+            'guard_name' => 'api',
+        ]);
+
         //Admin
         $adminRole = Role::firstOrCreate([
             'name' => 'admin',

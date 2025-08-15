@@ -7,4 +7,5 @@ return [
     'no_right' => 'Դուք չունեք իրավունք',
     'not_allowed_to_delete_yourself' => 'Չի թույլատրվում ջնջել ինքներդ ձեզ',
     'not_allowed_to_delete_other_super_admins' => 'Չի թույլատրվում ջնջել այլ սուպեր ադմինիստրատորների',
+    'not_allowed_to_change_password_for_social_users' => 'Սոցիալական ցանցի միջոցով գրանցված օգտատերերի գաղտնաբառի փոփոխությունը հնարավոր չէ',
 ];

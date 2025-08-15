@@ -15,4 +15,5 @@ return [
 
     'oauth_error' => 'Permission error. Please try again later.',
     'unable_to_refresh' => 'Unable to refresh token. Please login again.',
+    'cannot_delete_super_admin' => "can't delete super_admin",
 ];
