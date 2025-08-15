@@ -11,6 +11,11 @@ use Illuminate\Support\Facades\Route;
 Route::post('/login', [AuthController::class, 'login'])->name('login');
 Route::post('/refresh', [AuthController::class, 'refreshToken']);
 
+Route::post('/register', [AuthController::class, 'register']);
+Route::get('/verify-email/{id}/{hash}', [AuthController::class, 'verify'])
+    ->middleware('signed')
+    ->name('verification.verify');
+
 Route::get('/auth/{provider}/redirect', [SocialAuthController::class, 'redirect']);
 Route::get('/auth/{provider}/callback', [SocialAuthController::class, 'callback']);
 

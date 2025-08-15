@@ -8,17 +8,21 @@ use App\Http\Requests\ChangePasswordRequest;
 use App\Http\Requests\CreateUserRequest;
 use App\Http\Requests\IndexRequest;
 use App\Http\Requests\RefreshTokenRequest;
+use App\Http\Requests\RegisterUserRequest;
 use App\Http\Requests\UpdateUserRequest;
 use App\Http\Requests\UserLoginRequest;
 use App\Http\Resources\UserResource;
+use App\Jobs\SendVerificationEmail;
 use App\Models\User;
 use App\Traits\ApiResponse;
+use Illuminate\Auth\Events\Verified;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request as HttpRequest;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
 use Laravel\Passport\Http\Controllers\AccessTokenController;
@@ -27,6 +31,51 @@ use Psr\Http\Message\ServerRequestInterface;
 class AuthController extends Controller
 {
     use ApiResponse;
+
+    public function register(RegisterUserRequest $request): JsonResponse
+    {
+        $userData = $request->validated();
+        $userData['password'] = Hash::make($request->input('password'));
+
+        $existingUser = User::where('email', $userData['email'])->first();
+
+        if ($existingUser && !$existingUser->hasVerifiedEmail()) {
+            $existingUser->delete();
+        }
+
+        $user = User::create($userData);
+
+        $user->assignRole('user');
+
+        $locale = app()->getLocale();
+
+        SendVerificationEmail::dispatch($user, $locale);
+
+        return $this->response201(['message' => __('auth.verification_url_sent_message')]);
+    }
+
+    public function verify($id, $hash): JsonResponse
+    {
+        $user = User::find($id);
+
+        if (!$user) {
+            throw new CustomErrorException('user_not_found', 'auth', Response::HTTP_UNAUTHORIZED);
+        }
+
+        if (!hash_equals((string)$hash, sha1($user->getEmailForVerification()))) {
+            throw new CustomErrorException('invalid_verification_url_message', 'auth', Response::HTTP_BAD_REQUEST);
+        }
+
+        if ($user->hasVerifiedEmail()) {
+            return $this->response200(['message' => __('auth.already_verified')]);
+        }
+
+        $user->markEmailAsVerified();
+
+        Event::dispatch(new Verified($user));
+
+        return $this->response200(['message' => __('successMessage.success')]);
+    }
 
     public function login(UserLoginRequest $request): JsonResponse
     {

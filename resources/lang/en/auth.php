@@ -6,7 +6,6 @@ return [
     'verification_code_expiration_message' => 'Verification code has not expired. Message sent to your email.',
     'verification_url_sent_message' => 'Verification url sent to your email.',
     'invalid_verification_url_message' => 'Invalid verification url',
-    'verification_code_has_expired' => 'The verification code has expired',
     'user_not_found' => 'User not found',
     'incorrect_password' => 'Incorrect password',
     'invalid_code_or_email' => 'Invalid code or email',
