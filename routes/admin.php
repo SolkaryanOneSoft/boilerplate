@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AboutController;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\ContactUsController;
 use App\Http\Controllers\FileUploadController;
 use App\Http\Controllers\RegularBannerController;
 use App\Http\Controllers\SeoMetaController;
@@ -24,6 +25,7 @@ Route::middleware(['auth:api', 'check.token'])->group(function () {
     Route::get('/personal', [AuthController::class, 'personalInfo']);
 
     Route::apiResource('/about', AboutController::class)->names('admin.about');
+    Route::apiResource('/contact-us', ContactUsController::class)->names('admin.contact-us');
 
     Route::post('/regular-banner', [RegularBannerController::class, 'store']);
     Route::get('/regular-banner/{page}', [RegularBannerController::class, 'show']);
