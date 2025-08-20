@@ -20,6 +20,7 @@ class About extends Model
         'image'
     ];
 
+    protected $table = 'about';
     protected $casts = [
         'image' => 'array',
     ];
