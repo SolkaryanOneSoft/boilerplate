@@ -38,7 +38,7 @@ class SocialAuthController extends Controller
         $nameParts = explode(' ', $fullName, 2);
 
         $name = $nameParts[0];
-        $password = config('passport.social_auth_password');
+        $password = config('passport.social_default_password');
 //        $surname = $nameParts[1] ?? 'Unknown';
 
         $user = User::where('email', $socialUser->getEmail())
