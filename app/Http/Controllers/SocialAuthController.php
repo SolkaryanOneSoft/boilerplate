@@ -9,12 +9,9 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
-use Laravel\Passport\Http\Controllers\AccessTokenController;
 use Laravel\Socialite\Facades\Socialite;
-use Psr\Http\Message\ServerRequestInterface;
 
 class SocialAuthController extends Controller
 {
