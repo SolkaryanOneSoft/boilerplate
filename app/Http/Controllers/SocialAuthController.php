@@ -34,21 +34,19 @@ class SocialAuthController extends Controller
 
     private function handleSocialLogin($socialUser, string $provider): JsonResponse
     {
-        $fullName = $socialUser->getName() ?? 'NoName Unknown';
-        $nameParts = explode(' ', $fullName, 2);
-
-        $name = $nameParts[0];
         $password = config('passport.social_default_password');
-//        $surname = $nameParts[1] ?? 'Unknown';
 
         $user = User::where('email', $socialUser->getEmail())
             ->orWhere('provider_id', $socialUser->getId())
             ->first();
 
         if (!$user) {
+            $fullName = $socialUser->getName() ?? 'NoName Unknown';
+            $nameParts = explode(' ', $fullName, 2);
+            $name = $nameParts[0];
+
             $user = User::create([
                 'name' => $name,
-//                'surname' => $surname,
                 'email' => $socialUser->getEmail(),
                 'email_verified_at' => now(),
                 'password' => Hash::make($password),
@@ -57,32 +55,19 @@ class SocialAuthController extends Controller
             ]);
             $user->assignRole('user');
         } else {
-            if (!$user->provider_id) {
-                $user->update([
-                    'provider' => $provider,
-                    'provider_id' => $socialUser->getId(),
-                ]);
+            $updateData = [
+                'provider' => $provider,
+                'provider_id' => $socialUser->getId(),
+            ];
+
+            if (!Hash::check($password, $user->password)) {
+                $updateData['password'] = Hash::make($password);
             }
+
+            $user->update($updateData);
         }
 
-        $tokenRequest = Request::create('/oauth/token', 'POST', [
-            'grant_type' => 'password',
-            'client_id' => config('passport.client_id'),
-            'client_secret' => config('passport.client_secret'),
-            'username' => $user->email,
-            'password' => $password,
-            'scope' => '',
-        ]);
-
-        $response = App::make(AccessTokenController::class)
-            ->issueToken(app()->make(ServerRequestInterface::class)
-                ->withParsedBody($tokenRequest->request->all()));
-
-        $tokenData = json_decode($response->getContent(), true);
-
-        if (!isset($tokenData['access_token'])) {
-            throw new CustomErrorException('oauth_error', 'auth', Response::HTTP_INTERNAL_SERVER_ERROR);
-        }
+        $tokenData = $this->getOAuthTokens($user->email, $password);
 
         $userRole = DB::table('model_has_roles')->where('model_id', $user->id)->value('role_id');
 
@@ -93,6 +78,35 @@ class SocialAuthController extends Controller
             'user' => $user,
             'role' => $userRole,
         ]);
+    }
+
+    private function getOAuthTokens(string $email, string $password): array
+    {
+        $client = DB::table('oauth_clients')
+            ->where('password_client', true)
+            ->first();
+
+        if (!$client) {
+            throw new CustomErrorException('user_not_found', 'auth', Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+
+        $tokenRequest = Request::create('/oauth/token', 'POST', [
+            'grant_type' => 'password',
+            'client_id' => $client->id,
+            'client_secret' => $client->secret,
+            'username' => $email,
+            'password' => $password,
+            'scope' => '',
+        ]);
+
+        $tokenResponse = app()->handle($tokenRequest);
+        $tokenData = json_decode($tokenResponse->getContent(), true);
+
+        if (!isset($tokenData['access_token'])) {
+            throw new CustomErrorException('oauth_error', 'auth', Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+
+        return $tokenData;
     }
 
 }
