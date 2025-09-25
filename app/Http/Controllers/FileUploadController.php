@@ -7,6 +7,7 @@ use App\Http\Requests\UploadImagesRequest;
 use App\Jobs\OptimizeImageJob;
 use App\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Storage;
 
 class FileUploadController extends Controller
 {
@@ -33,23 +34,33 @@ class FileUploadController extends Controller
     public function uploadFile(UploadFileRequest $request): JsonResponse
     {
         $uploadedFile = $request->file('file');
-        $path = $uploadedFile->store('uploaded', 'public');
 
-        if (str_starts_with($uploadedFile->getMimeType(), 'image/')) {
+        $originalName = pathinfo($uploadedFile->getClientOriginalName(), PATHINFO_FILENAME);
+        $extension = $uploadedFile->getClientOriginalExtension();
+        $fileName = $originalName . '.' . $extension;
+        $counter = 1;
+
+        while (Storage::disk('public')->exists('uploaded/' . $fileName)) {
+            $fileName = $originalName . '_' . $counter . '.' . $extension;
+            $counter++;
+        }
+
+        $path = $uploadedFile->storeAs('uploaded', $fileName, 'public');
+
+        $relativePath = '/storage/' . str_replace('public/', '', $path);
+
+        $mainType = explode('/', $uploadedFile->getMimeType())[0];
+
+        if ($mainType === 'image') {
             OptimizeImageJob::dispatch($path);
         }
 
-        $relativePath = '/storage/' . str_replace('public/', '', $path);
-        $mainType = explode('/', $uploadedFile->getMimeType())[0];
-        $originalName = $uploadedFile->getClientOriginalName();
-        $nameWithoutExtension = pathinfo($originalName, PATHINFO_FILENAME);
-
-        $file = [
-            'path' => $relativePath,
-            'file_type' => $mainType,
-            'name' => $nameWithoutExtension
+        $fileData = [
+            'path'       => $relativePath,
+            'file_type'  => $mainType,
+            'name'       => $originalName,
         ];
 
-        return $this->response200($file);
+        return $this->response200($fileData);
     }
 }
