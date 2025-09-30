@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\UploadFileRequest;
 use App\Http\Requests\UploadImagesRequest;
-use App\Jobs\OptimizeImageJob;
 use App\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Storage;
@@ -27,10 +26,6 @@ class FileUploadController extends Controller
 
             if ($mainType === 'image') {
                 $originalFileName = uniqid() . '.' . $extension;
-                $originalPath = 'images/original/' . $originalFileName;
-                $file->storeAs('images/original', $originalFileName, 'public');
-                OptimizeImageJob::dispatch($originalPath);
-
                 $webpName = pathinfo($originalFileName, PATHINFO_FILENAME) . '.webp';
                 $webpPath = 'images/' . $webpName;
 
@@ -83,10 +78,6 @@ class FileUploadController extends Controller
 
         if ($mainType === 'image') {
             $originalFileName = uniqid() . '.' . $extension;
-            $originalPath = 'images/original/' . $originalFileName;
-            $file->storeAs('images/original', $originalFileName, 'public');
-            OptimizeImageJob::dispatch($originalPath);
-
             $webpName = pathinfo($originalFileName, PATHINFO_FILENAME) . '.webp';
             $webpPath = 'images/' . $webpName;
 
@@ -101,7 +92,6 @@ class FileUploadController extends Controller
                 'path' => $relativePath,
                 'file_type' => $mainType,
                 'name' => $originalName,
-                'original' => '/storage/' . $originalPath
             ];
         } elseif ($mainType === 'video') {
             $videoName = uniqid() . '.' . $extension;
