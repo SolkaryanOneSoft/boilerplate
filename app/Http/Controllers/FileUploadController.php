@@ -8,6 +8,8 @@ use App\Jobs\OptimizeImageJob;
 use App\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Storage;
+use Intervention\Image\ImageManager;
+use Intervention\Image\Interfaces\ImageInterface;
 
 class FileUploadController extends Controller
 {
@@ -16,16 +18,56 @@ class FileUploadController extends Controller
     public function uploadImages(UploadImagesRequest $request): JsonResponse
     {
         $uploadedPaths = [];
+        $manager = ImageManager::gd();
 
-        foreach ($request->file('images') as $image) {
-            $path = $image->store('images', 'public');
+        foreach ($request->file('images') as $file) {
+            $mainType = explode('/', $file->getClientMimeType())[0];
+            $originalName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
+            $extension = $file->getClientOriginalExtension();
 
-            OptimizeImageJob::dispatch($path);
+            if ($mainType === 'image') {
+                $originalFileName = uniqid() . '.' . $extension;
+                $originalPath = 'images/original/' . $originalFileName;
+                $file->storeAs('images/original', $originalFileName, 'public');
+                OptimizeImageJob::dispatch($originalPath);
 
-            $relativePath = '/storage/' . str_replace('public/', '', $path);
-            $mainType = explode('/', $image->getMimeType())[0];
+                $webpName = pathinfo($originalFileName, PATHINFO_FILENAME) . '.webp';
+                $webpPath = 'images/' . $webpName;
 
-            $uploadedPaths[] = ['path' => $relativePath, 'file_type' => $mainType];
+                /** @var ImageInterface $img */
+                $img = $manager->read($file->getRealPath())
+                    ->toWebp(80);
+
+                $img->save(storage_path('app/public/' . $webpPath));
+                $relativePath = '/storage/' . $webpPath;
+
+                $uploadedPaths[] = [
+                    'path' => $relativePath,
+                    'file_type' => $mainType,
+                ];
+            } elseif ($mainType === 'video') {
+                $videoName = uniqid() . '.' . $extension;
+                $videoPath = 'videos/' . $videoName;
+                $file->storeAs('videos', $videoName, 'public');
+
+                $uploadedPaths[] = [
+                    'path' => '/storage/' . $videoPath,
+                    'file_type' => $mainType,
+                ];
+            } else {
+                $fileName = $originalName . '.' . $extension;
+                $counter = 1;
+                while (Storage::disk('public')->exists('uploaded/' . $fileName)) {
+                    $fileName = $originalName . '_' . $counter . '.' . $extension;
+                    $counter++;
+                }
+                $path = $file->storeAs('uploaded', $fileName, 'public');
+
+                $uploadedPaths[] = [
+                    'path' => '/storage/' . str_replace('public/', '', $path),
+                    'file_type' => $mainType,
+                ];
+            }
         }
 
         return $this->response200($uploadedPaths);
@@ -33,33 +75,59 @@ class FileUploadController extends Controller
 
     public function uploadFile(UploadFileRequest $request): JsonResponse
     {
-        $uploadedFile = $request->file('file');
-
-        $originalName = pathinfo($uploadedFile->getClientOriginalName(), PATHINFO_FILENAME);
-        $extension = $uploadedFile->getClientOriginalExtension();
-        $fileName = $originalName . '.' . $extension;
-        $counter = 1;
-
-        while (Storage::disk('public')->exists('uploaded/' . $fileName)) {
-            $fileName = $originalName . '_' . $counter . '.' . $extension;
-            $counter++;
-        }
-
-        $path = $uploadedFile->storeAs('uploaded', $fileName, 'public');
-
-        $relativePath = '/storage/' . str_replace('public/', '', $path);
-
-        $mainType = explode('/', $uploadedFile->getMimeType())[0];
+        $file = $request->file('file');
+        $mainType = explode('/', $file->getClientMimeType())[0];
+        $originalName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
+        $extension = $file->getClientOriginalExtension();
+        $manager = ImageManager::gd();
 
         if ($mainType === 'image') {
-            OptimizeImageJob::dispatch($path);
-        }
+            $originalFileName = uniqid() . '.' . $extension;
+            $originalPath = 'images/original/' . $originalFileName;
+            $file->storeAs('images/original', $originalFileName, 'public');
+            OptimizeImageJob::dispatch($originalPath);
 
-        $fileData = [
-            'path'       => $relativePath,
-            'file_type'  => $mainType,
-            'name'       => $originalName,
-        ];
+            $webpName = pathinfo($originalFileName, PATHINFO_FILENAME) . '.webp';
+            $webpPath = 'images/' . $webpName;
+
+            /** @var ImageInterface $img */
+            $img = $manager->read($file->getRealPath())
+                ->toWebp(80);
+
+            $img->save(storage_path('app/public/' . $webpPath));
+            $relativePath = '/storage/' . $webpPath;
+
+            $fileData = [
+                'path' => $relativePath,
+                'file_type' => $mainType,
+                'name' => $originalName,
+                'original' => '/storage/' . $originalPath
+            ];
+        } elseif ($mainType === 'video') {
+            $videoName = uniqid() . '.' . $extension;
+            $videoPath = 'videos/' . $videoName;
+            $file->storeAs('videos', $videoName, 'public');
+
+            $fileData = [
+                'path' => '/storage/' . $videoPath,
+                'file_type' => $mainType,
+                'name' => $originalName,
+            ];
+        } else {
+            $fileName = $originalName . '.' . $extension;
+            $counter = 1;
+            while (Storage::disk('public')->exists('uploaded/' . $fileName)) {
+                $fileName = $originalName . '_' . $counter . '.' . $extension;
+                $counter++;
+            }
+            $path = $file->storeAs('uploaded', $fileName, 'public');
+
+            $fileData = [
+                'path' => '/storage/' . str_replace('public/', '', $path),
+                'file_type' => $mainType,
+                'name' => $originalName,
+            ];
+        }
 
         return $this->response200($fileData);
     }
