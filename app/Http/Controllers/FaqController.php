@@ -30,7 +30,7 @@ class FaqController extends Controller
 
         return $this->response200([
             'total' => $total,
-            'faqs' => FaqResource::collection($faqs)
+            'items' => FaqResource::collection($faqs)
         ]);
     }
 

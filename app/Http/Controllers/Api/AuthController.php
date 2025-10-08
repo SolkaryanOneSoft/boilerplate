@@ -233,7 +233,7 @@ class AuthController extends Controller
 
         return $this->response200([
             'total' => $total,
-            'users' => $users
+            'items' => $users
         ]);
     }
 

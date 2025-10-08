@@ -31,7 +31,7 @@ class SeoMetaController extends Controller
 
         return $this->response200([
             'total' => $total,
-            'seo_metas' => $seoMetas
+            'items' => $seoMetas
         ]);
     }
 
